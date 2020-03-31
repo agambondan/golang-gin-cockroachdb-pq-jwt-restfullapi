@@ -38,11 +38,6 @@ func (server *Server) GetAllUser(c *gin.Context) {
 }
 
 func (server *Server) GetUserById(c *gin.Context) {
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, " + err.Error()})
-		return
-	}
 	id := c.Params.ByName("id")
 	uId := uuid.MustParse(id)
 	user := models.User{}
@@ -66,8 +61,7 @@ func (server *Server) UpdateUserById(c *gin.Context) {
 		return
 	}
 	user := models.User{}
-	err = server.DB.QueryRow("SELECT id, created_at, updated_at, full_name, username, password, email FROM users WHERE id=$1", uId).
-		Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.FullName, &user.Username, &user.Password, &user.Email)
+	_, err = user.FindUserById(server.DB, uId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 	}
@@ -76,13 +70,13 @@ func (server *Server) UpdateUserById(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
 		return
 	}
-	userId, err := auth.ExtractTokenID(c.Request)
+	userToken, err := auth.ExtractTokenUser(c.Request)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
-	if userId != uId.String() {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userId)})
+	if userToken.ID != uId {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
 		return
 	}
 	userById, err := user.UpdateUserById(server.DB, uId)
@@ -105,13 +99,13 @@ func (server *Server) DeleteUserById(c *gin.Context) {
 	id := c.Params.ByName("id")
 	uId := uuid.MustParse(id)
 	user := models.User{}
-	userId, err := auth.ExtractTokenID(c.Request)
+	userToken, err := auth.ExtractTokenUser(c.Request)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 		return
 	}
-	if userId != uId.String() {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userId)})
+	if userToken.ID != uId {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
 		return
 	}
 	deleteUserById, err := user.SoftDeleteUserById(server.DB, uId)

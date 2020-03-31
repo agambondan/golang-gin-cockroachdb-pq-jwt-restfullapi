@@ -5,7 +5,6 @@ import (
 	"../models"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	//"log"
 	"net/http"
 
 	"golang.org/x/crypto/bcrypt"
@@ -33,17 +32,21 @@ func (server *Server) Login(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
+	err = server.DB.QueryRow("SELECT id, full_name, username, email, password, role_id FROM users WHERE username=$1 OR email=$2", user.Username, user.Email).
+		Scan(&user.ID, &user.FullName, &user.Username, &user.Email, &user.Password, &user.RoleId)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
+	}
 	c.JSON(http.StatusOK, gin.H{
 		"token":    token,
-		"username": user.Username,
-		"password": user.Password,
-		"email":    user.Email,
+		"user":     user,
 	})
 }
 
 func (server *Server) SignIn(email, username, password string) (string, error) {
 	user := models.User{}
-	err := server.DB.QueryRow("SELECT id, username, email, password FROM users WHERE username=$1 OR email=$2", username, email).Scan(&user.ID, &user.Username, &user.Email, &user.Password)
+	err := server.DB.QueryRow("SELECT id, full_name, username, email, password, role_id FROM users WHERE username=$1 OR email=$2", username, email).
+		Scan(&user.ID, &user.FullName, &user.Username, &user.Email, &user.Password, &user.RoleId)
 	if err != nil {
 		return err.Error(), err
 	}
@@ -52,5 +55,12 @@ func (server *Server) SignIn(email, username, password string) (string, error) {
 		fmt.Println(err)
 		return "", err
 	}
-	return auth.CreateToken(user.ID)
+	role := models.Role{}
+	roleById, err := role.FindRoleById(server.DB, user.RoleId)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+	user.Role = *roleById
+	return auth.CreateToken(user)
 }

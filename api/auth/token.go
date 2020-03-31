@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"../models"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -13,10 +14,11 @@ import (
 	"github.com/dgrijalva/jwt-go"
 )
 
-func CreateToken(userId uuid.UUID) (string, error) {
+func CreateToken(user models.User) (string, error) {
 	claims := jwt.MapClaims{}
 	claims["authorized"] = true
-	claims["user_id"] = userId.String()
+	claims["user_id"] = user.ID.String()
+	claims["role"] = user.Role.Name
 	claims["exp"] = time.Now().Add(time.Hour * 48).Unix() //Token expires after 48 hour or 2 day
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("API_SECRET")))
@@ -52,7 +54,8 @@ func ExtractToken(r *http.Request) string {
 	return ""
 }
 
-func ExtractTokenID(r *http.Request) (string, error) {
+func ExtractTokenUser(r *http.Request) (*models.User, error) {
+	var user models.User
 	tokenString := ExtractToken(r)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -61,14 +64,18 @@ func ExtractTokenID(r *http.Request) (string, error) {
 		return []byte(os.Getenv("API_SECRET")), nil
 	})
 	if err != nil {
-		return "01", err
+		return &user, err
 	}
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if ok && token.Valid {
-		uid := fmt.Sprint(claims["user_id"])
-		return uid, nil
+		uId := fmt.Sprint(claims["user_id"])
+		uIdUUID := uuid.MustParse(uId)
+		uRole := fmt.Sprint(claims["role"])
+		user.ID = uIdUUID
+		user.Role.Name = uRole
+		return &user, nil
 	}
-	return "03", nil
+	return &user, nil
 }
 
 //Pretty display the claims likely in the terminal

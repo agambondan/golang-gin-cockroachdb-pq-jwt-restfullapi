@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"../middlewares"
 	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
@@ -30,10 +31,11 @@ func (server *Server) Initialize(DBDriver, DBUrl string) {
 		}
 	}
 	server.Router = gin.Default()
+	server.Router.Use(middlewares.CORSMiddleware())
 	server.initializeRoutes()
 }
 
 func (server *Server) Run(addr string) {
-	fmt.Println("Listening to localhost" + os.Getenv("PORT"))
+	fmt.Println("\nListening to localhost" + os.Getenv("PORT"))
 	log.Fatal(http.ListenAndServe(addr, server.Router))
 }
