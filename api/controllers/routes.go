@@ -20,7 +20,6 @@ func (server *Server) initializeRoutes() {
 	server.Router.DELETE("/user/:id", middlewares.TokenAuthMiddleware(), server.DeleteUserById)
 	server.Router.POST("/user/:id/upload", server.UploadFile)
 
-
 	// Post Route
 	server.Router.POST("/post", middlewares.TokenAuthMiddleware(), server.CreatePost)
 	server.Router.GET("/posts", server.GetAllPost)
@@ -35,5 +34,8 @@ func (server *Server) initializeRoutes() {
 	server.Router.PUT("/role/:id", server.UpdateRoleById)
 	server.Router.DELETE("/role/:id", server.DeleteRoleById)
 
-	// Upload Route
+	// Export || Import Route
+	server.Router.GET("/export-user", server.ExportUserToExcel)
+	server.Router.POST("/import-user", server.ImportExcelToUser)
+
 }

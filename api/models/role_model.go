@@ -19,7 +19,7 @@ type Role struct {
 }
 
 func (r *Role) Prepare() {
-	r.ID = int(rand.Uint32())
+	r.ID = rand.Intn(30-10) + 10
 	r.CreatedAt = time.Now()
 	r.UpdatedAt = time.Now()
 	r.Name = html.EscapeString(strings.TrimSpace(r.Name))

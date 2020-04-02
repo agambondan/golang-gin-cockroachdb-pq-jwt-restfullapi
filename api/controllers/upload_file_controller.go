@@ -35,6 +35,7 @@ func (server *Server) UploadFile(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
 		return
 	}
+
 	form, err := c.MultipartForm()
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})

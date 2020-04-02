@@ -30,7 +30,7 @@ func Load(db *sql.DB) {
 	//if err != nil {
 	//	log.Fatal(err)
 	//}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id uuid PRIMARY KEY, created_at date, updated_at date, deleted_at date, full_name VARCHAR(55) not null, username VARCHAR(55) unique not null, password VARCHAR(255) not null, email VARCHAR(55) unique not null, role_id int not null )")
+	_, err = db.Exec("CREATE TABLE IF NOT EXISTS users (id uuid PRIMARY KEY, created_at date, updated_at date, deleted_at date, full_name VARCHAR(55) not null, phone_number VARCHAR(15) not null, username VARCHAR(55) unique not null, password VARCHAR(255) not null, email VARCHAR(55) unique not null, role_id int not null )")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -42,11 +42,17 @@ func Load(db *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	id := 29
-	date := time.Now()
-	roleName := "admin"
-	_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", id, date, date, nil, roleName)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	//date := time.Now()
+	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 100, date, date, nil, "admin")
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
+	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 25, date, date, nil, "reader")
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
+	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 50, date, date, nil, "writer")
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
 }
