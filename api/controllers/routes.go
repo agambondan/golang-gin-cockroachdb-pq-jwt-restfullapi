@@ -18,7 +18,7 @@ func (server *Server) initializeRoutes() {
 	server.Router.GET("/user/:id", server.GetUserById)
 	server.Router.PUT("/user/:id", middlewares.TokenAuthMiddleware(), server.UpdateUserById)
 	server.Router.DELETE("/user/:id", middlewares.TokenAuthMiddleware(), server.DeleteUserById)
-	server.Router.POST("/user/:id/upload", server.UploadFile)
+	server.Router.POST("/user/:id/upload-image", middlewares.TokenAuthMiddleware(), server.UploadFile)
 
 	// Post Route
 	server.Router.POST("/post", middlewares.TokenAuthMiddleware(), server.CreatePost)
@@ -28,14 +28,17 @@ func (server *Server) initializeRoutes() {
 	server.Router.DELETE("/post/:id", middlewares.TokenAuthMiddleware(), server.DeletePostById)
 
 	// Role Route
-	server.Router.POST("/role", server.CreateRole)
+	server.Router.POST("/role", middlewares.TokenAuthMiddleware(), server.CreateRole)
 	server.Router.GET("/roles", server.GetAllRole)
 	server.Router.GET("/role/:id", server.GetRoleById)
-	server.Router.PUT("/role/:id", server.UpdateRoleById)
-	server.Router.DELETE("/role/:id", server.DeleteRoleById)
+	server.Router.PUT("/role/:id", middlewares.TokenAuthMiddleware(), server.UpdateRoleById)
+	server.Router.DELETE("/role/:id", middlewares.TokenAuthMiddleware(), server.DeleteRoleById)
 
 	// Export || Import Route
-	server.Router.GET("/export-user", server.ExportUserToExcel)
-	server.Router.POST("/import-user", server.ImportExcelToUser)
+	server.Router.GET("/export-user", middlewares.TokenAuthMiddleware(), server.ExportUserToExcel)
+	server.Router.POST("/import-user", middlewares.TokenAuthMiddleware(), server.ImportExcelToUser)
+
+	// SMTP Route
+	server.Router.POST("/send-email", middlewares.TokenAuthMiddleware(), server.SendEmail)
 
 }

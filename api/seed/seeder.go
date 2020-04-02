@@ -42,17 +42,17 @@ func Load(db *sql.DB) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	//date := time.Now()
-	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 100, date, date, nil, "admin")
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
-	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 25, date, date, nil, "reader")
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
-	//_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 50, date, date, nil, "writer")
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
+	date := time.Now()
+	_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 100, date, date, nil, "admin")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 25, date, date, nil, "reader")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	_, err = db.Exec("INSERT INTO role VALUES ($1, $2, $3, $4, $5)", 50, date, date, nil, "writer")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
 }

@@ -112,7 +112,7 @@ func (server *Server) ImportExcelToUser(c *gin.Context) {
 }
 
 func convertStringToDate(string string) *time.Time {
-	if string == "NULL" || string == "0001-01-01 00:00:00 +0000 UTC"{
+	if string == "NULL" || string == "0001-01-01 00:00:00 +0000 UTC" {
 		return nil
 	}
 	layoutFormat := "2006-01-02 00:00:00 +0000 +0000"
