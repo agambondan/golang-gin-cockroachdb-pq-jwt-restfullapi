@@ -2,7 +2,6 @@ package controllers
 
 //
 import (
-	"../auth"
 	"../models"
 	"encoding/json"
 	"errors"
@@ -12,20 +11,11 @@ import (
 )
 
 func (server *Server) CreatePost(c *gin.Context) {
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized"})
-		return
-	}
+	userToken := extractToken(c)
 	post := models.Post{}
-	err = c.BindJSON(&post)
+	err := c.BindJSON(&post)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
-		return
-	}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, uid : " + userToken.ID.String() + err.Error()})
 		return
 	}
 	if userToken.ID != post.AuthorID {
@@ -83,14 +73,9 @@ func (server *Server) GetPostById(c *gin.Context) {
 func (server *Server) UpdatePostById(c *gin.Context) {
 	id := c.Params.ByName("id")
 	pId := uuid.MustParse(id)
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, " + err.Error()})
-		return
-	}
+	userToken := extractToken(c)
 	post := models.Post{}
-	// Check if the post exist
-	_, err = post.FindPostByID(server.DB, pId)
+	_, err := post.FindPostByID(server.DB, pId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 		return
@@ -100,13 +85,6 @@ func (server *Server) UpdatePostById(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
 		return
 	}
-	//CHeck if the auth token is valid and get the user id from it
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-	// If a user attempt to update a post not belonging to him
 	if userToken.ID != post.AuthorID {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + userToken.ID.String() + " " + post.AuthorID.String()).Error()})
 		return
@@ -120,29 +98,18 @@ func (server *Server) UpdatePostById(c *gin.Context) {
 }
 
 func (server *Server) DeletePostById(c *gin.Context) {
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, " + err.Error()})
-		return
-	}
+	userToken := extractToken(c)
 	id := c.Params.ByName("id")
 	pId := uuid.MustParse(id)
 	post := models.Post{}
 	user := models.User{}
-	_, err = post.FindPostByID(server.DB, post.AuthorID)
-	//err = server.DB.QueryRow("SELECT author_id FROM post WHERE id=$1", pId).Scan(&post.AuthorID)
+	_, err := post.FindPostByID(server.DB, post.AuthorID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 	}
 	_, err = user.FindUserById(server.DB, user.ID)
-	//err = server.DB.QueryRow("SELECT id FROM users WHERE id=$1", post.AuthorID).Scan(&user.ID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
-	}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
 	}
 	if userToken.ID != user.ID {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + user.ID.String() + " " + userToken.ID.String())})

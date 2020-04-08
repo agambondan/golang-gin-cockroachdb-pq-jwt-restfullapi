@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"../auth"
 	"../models"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -9,24 +8,15 @@ import (
 )
 
 func (server *Server) CreateRole(c *gin.Context) {
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized"})
+	userToken := extractToken(c)
+	if userToken.Role.Name != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
 		return
 	}
 	role := models.Role{}
-	err = c.BindJSON(&role)
+	err := c.BindJSON(&role)
 	if err != nil {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
-		return
-	}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, uid : " + userToken.ID.String() + err.Error()})
-		return
-	}
-	if userToken.Role.Name != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
 		return
 	}
 	err = role.Validate()
@@ -68,6 +58,11 @@ func (server *Server) GetRoleById(c *gin.Context) {
 }
 
 func (server *Server) UpdateRoleById(c *gin.Context) {
+	userToken := extractToken(c)
+	if userToken.Role.Name != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
+		return
+	}
 	id := c.Params.ByName("id")
 	uId, err := strconv.Atoi(id)
 	if err != nil {
@@ -89,6 +84,11 @@ func (server *Server) UpdateRoleById(c *gin.Context) {
 }
 
 func (server *Server) DeleteRoleById(c *gin.Context) {
+	userToken := extractToken(c)
+	if userToken.Role.Name != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
+		return
+	}
 	id := c.Params.ByName("id")
 	uId, err := strconv.Atoi(id)
 	if err != nil {

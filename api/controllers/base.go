@@ -18,17 +18,13 @@ type Server struct {
 }
 
 func (server *Server) Initialize(DBDriver, DBUrl string) {
-	if DBDriver == "postgres" {
-		var err error
-		server.DB, err = sql.Open(DBDriver, DBUrl)
-		if err != nil {
-			fmt.Printf("Cannot connect to %s database", DBDriver)
-			fmt.Println()
-			log.Fatal("This is the error:", err)
-		} else {
-			fmt.Printf("We are connected to the %s database", DBDriver)
-			fmt.Println()
-		}
+	var err error
+	server.DB, err = sql.Open(DBDriver, DBUrl)
+	if err != nil {
+		fmt.Printf("\nCannot connect to %s database", DBDriver)
+		log.Fatal("This is the error:", err)
+	} else {
+		fmt.Printf("\nWe are connected to the %s database", DBDriver)
 	}
 	server.Router = gin.Default()
 	server.Router.Use(middlewares.CORSMiddleware())

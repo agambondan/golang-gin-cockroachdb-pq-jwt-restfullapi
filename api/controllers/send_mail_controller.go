@@ -1,13 +1,9 @@
 package controllers
 
 import (
-	"../auth"
-	"fmt"
 	"github.com/gin-gonic/gin"
 	"gopkg.in/gomail.v2"
 	"net/http"
-	"os"
-	"path/filepath"
 )
 
 const ConfigSmtpHost = "smtp.gmail.com"
@@ -16,9 +12,15 @@ const ConfigEmail = "agam.pro234@gmail.com"
 const ConfigPassword = "selamatagam0"
 
 func (server *Server) SendEmail(c *gin.Context) {
-	filenames, err := uploadFile(c)
+	var err error
+	userToken := extractToken(c)
+	if userToken.Role.Name != "admin" {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
+		return
+	}
+	filenames := uploadFile(userToken, c)
 	if len(filenames) > 5 {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Upload file can't greater than 5"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Upload file can't greater than 5 file"})
 	}
 	to := c.PostForm("to")
 	cc := c.PostForm("cc")
@@ -31,11 +33,9 @@ func (server *Server) SendEmail(c *gin.Context) {
 	mailer.SetAddressHeader("Cc", cc, ccName)
 	mailer.SetHeader("Subject", subject)
 	mailer.SetBody("text/html", body)
-	mailer.Attach(filenames[1])
-	mailer.Attach(filenames[2])
-	mailer.Attach(filenames[3])
-	mailer.Attach(filenames[4])
-	mailer.Attach(filenames[5])
+	for i := 0; i < len(filenames); i++ {
+		mailer.Attach(filenames[i])
+	}
 	dialer := gomail.NewDialer(
 		ConfigSmtpHost,
 		ConfigSmtpPort,
@@ -46,53 +46,6 @@ func (server *Server) SendEmail(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
 	}
-	c.JSON(http.StatusOK, gin.H{"message": "Mail sent to" + "" + "!"})
+	c.JSON(http.StatusOK, gin.H{"message": "Mail sent to" + to + "!"})
 }
 
-func uploadFile(c *gin.Context) (filenames []string, err error) {
-	err = auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized"})
-		return
-	}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, uid : " + userToken.ID.String() + err.Error()})
-		return
-	}
-	if userToken.Role.Name != "admin" {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, Your not admin, you role is " + userToken.Role.Name})
-		return
-	}
-	form, err := c.MultipartForm()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-	files := form.File["files"]
-	for _, file := range files {
-		basename := filepath.Base(file.Filename)
-		dir := filepath.Join("./assets/mail/", userToken.ID.String())
-		if dir != "" {
-			err := os.Mkdir("./assets/mail/"+userToken.ID.String(), os.ModePerm)
-			if err != nil {
-				fmt.Println(err.Error())
-			}
-		}
-		regex := after(basename, ".")
-		if regex != "png" && regex != "jpg" {
-			c.JSON(http.StatusBadRequest, gin.H{"message": "file must be image png or jpg"})
-			return
-		}
-		filename := filepath.Join("./assets/mail/", userToken.ID.String(), basename)
-		err := c.SaveUploadedFile(file, filename)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error(), "test": 1})
-			return filenames, err
-		}
-		for _, file := range files {
-			filenames = append(filenames, file.Filename)
-		}
-	}
-	return
-}

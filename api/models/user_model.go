@@ -123,19 +123,18 @@ func (u User) FindAllUser(db *sql.DB) (users []User, err error) {
 		var user User
 		err := rows.Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt, &user.FullName, &user.PhoneNumber, &user.Username, &user.Password, &user.Email, &user.RoleId)
 		if err != nil {
-			fmt.Println(err.Error(), "wkwkwk")
-			//return users, err
+			return users, err
 		}
 		var role Role
 		err = db.QueryRow("SELECT id, created_at, updated_at, name FROM role WHERE id=$1", &user.RoleId).
 			Scan(&role.ID, &role.CreatedAt, &role.UpdatedAt, &role.Name)
 		if err != nil {
-			return users, err
+			fmt.Println(err)
 		}
 		user.Role = role
 		rowsPost, err := db.Query("SELECT id, created_at, updated_at, title, content, author_id FROM post WHERE author_id=$1", &user.ID)
 		if err != nil {
-			return users, err
+			fmt.Println(err)
 		}
 		for rowsPost.Next() {
 			var post Post

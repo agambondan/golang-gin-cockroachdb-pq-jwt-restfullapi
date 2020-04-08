@@ -21,5 +21,4 @@ func RunServer() {
 	server.Initialize(os.Getenv("POSTGRES"), os.Getenv("COCKROACH_URL"))
 	seed.Load(server.DB)
 	server.Run(os.Getenv("PORT"))
-
 }

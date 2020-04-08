@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"../auth"
 	"../models"
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -55,13 +54,13 @@ func (server *Server) GetUserById(c *gin.Context) {
 func (server *Server) UpdateUserById(c *gin.Context) {
 	id := c.Params.ByName("id")
 	uId := uuid.MustParse(id)
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, " + err.Error()})
+	userToken := extractToken(c)
+	if userToken.ID != uId {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
 		return
 	}
 	user := models.User{}
-	_, err = user.FindUserById(server.DB, uId)
+	_, err := user.FindUserById(server.DB, uId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 	}
@@ -70,15 +69,7 @@ func (server *Server) UpdateUserById(c *gin.Context) {
 		c.JSON(http.StatusUnprocessableEntity, gin.H{"message": err.Error()})
 		return
 	}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-	if userToken.ID != uId {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
-		return
-	}
+	filenames := uploadFile(userToken, c)
 	userById, err := user.UpdateUserById(server.DB, uId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
@@ -86,28 +77,20 @@ func (server *Server) UpdateUserById(c *gin.Context) {
 	}
 	c.JSON(http.StatusFound, gin.H{
 		"message": `Data By Id ` + uId.String() + ` Is Found`,
+		"upload":  filenames,
 		"data":    userById,
 	})
 }
 
 func (server *Server) DeleteUserById(c *gin.Context) {
-	err := auth.TokenValid(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "UnAuthorized, " + err.Error()})
-		return
-	}
 	id := c.Params.ByName("id")
 	uId := uuid.MustParse(id)
-	user := models.User{}
-	userToken, err := auth.ExtractTokenUser(c.Request)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": err.Error()})
-		return
-	}
-	if userToken.ID != uId {
+	userToken := extractToken(c)
+	if userToken.ID != uId || userToken.Role.Name != "admin" {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": errors.New("your user id not the same like post author id " + uId.String() + " " + userToken.ID.String())})
 		return
 	}
+	user := models.User{}
 	deleteUserById, err := user.SoftDeleteUserById(server.DB, uId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})

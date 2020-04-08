@@ -10,6 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+const query = ("SELECT id, full_name, username, email, password, role_id FROM users WHERE username=$1 OR email=$2")
+
 func (server *Server) Login(c *gin.Context) {
 	var user models.User
 	err := c.BindJSON(&user)
@@ -32,20 +34,20 @@ func (server *Server) Login(c *gin.Context) {
 		fmt.Println(err)
 		return
 	}
-	err = server.DB.QueryRow("SELECT id, full_name, username, email, password, role_id FROM users WHERE username=$1 OR email=$2", user.Username, user.Email).
+	err = server.DB.QueryRow(query, user.Username, user.Email).
 		Scan(&user.ID, &user.FullName, &user.Username, &user.Email, &user.Password, &user.RoleId)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": err.Error()})
 	}
 	c.JSON(http.StatusOK, gin.H{
-		"token":    token,
-		"user":     user,
+		"token": token,
+		"user":  user,
 	})
 }
 
 func (server *Server) SignIn(email, username, password string) (string, error) {
 	user := models.User{}
-	err := server.DB.QueryRow("SELECT id, full_name, username, email, password, role_id FROM users WHERE username=$1 OR email=$2", username, email).
+	err := server.DB.QueryRow(query, username, email).
 		Scan(&user.ID, &user.FullName, &user.Username, &user.Email, &user.Password, &user.RoleId)
 	if err != nil {
 		return err.Error(), err
