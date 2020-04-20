@@ -57,3 +57,9 @@ func after(value string, a string) string {
 	}
 	return value[adjustedPos:len(value)]
 }
+
+func failOnError(c *gin.Context, httpStatus int, err error) {
+	if err != nil {
+		c.JSON(httpStatus, gin.H{"message": err.Error()})
+	}
+}

@@ -12,6 +12,10 @@ func (server *Server) initializeRoutes() {
 	// Login Route
 	server.Router.POST("/login", server.Login)
 
+	// Message Broker
+	server.Router.POST("/booking", server.SendMessage)
+	server.Router.GET("/notify", server.GetConsumeMessageBroker)
+
 	// User Route
 	server.Router.POST("/user", server.CreateUser)
 	server.Router.GET("/users", server.GetAllUser)
